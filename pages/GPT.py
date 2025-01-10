@@ -68,7 +68,7 @@ if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == 
         })
         
         stream = client.chat.completions.create(
-            model="o1-mini-2024-09-12",
+            model="chatgpt-4o-latest",
             messages=messages,
             stream=True
         )
