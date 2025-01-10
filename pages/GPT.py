@@ -33,7 +33,7 @@ if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == 
         full_response = ""
         
         stream = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="o1-mini",
             messages=st.session_state["messages"],
             stream=True
         )
@@ -52,4 +52,4 @@ user_input = st.chat_input("메시지를 입력하세요...")
 
 if user_input:
     st.session_state["messages"].append({"role": "user", "content": user_input})
-    st.experimental_rerun()
+    st.rerun()  # experimental_rerun() 대신 rerun() 사용
