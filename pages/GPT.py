@@ -4,23 +4,32 @@ import re
 
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
-
 def process_latex(text):
-    """모든 LaTeX 수식을 처리하는 함수"""
+    """모든 LaTeX 수식을 처리하고 줄바꿈을 보존하는 함수"""
     
     # 멀티라인 수식 처리 ($$...$$)
     text = re.sub(r'\$\$(.*?)\$\$', lambda m: f'$${m.group(1).strip()}$$', text, flags=re.DOTALL)
     
     # LaTeX 수식 문법 정규화
-    text = text.replace('\\times', ' \\times ')  # 곱셈 기호 주변 공백 추가
-    text = text.replace('\\pm', ' \\pm ')       # 플러스마이너스 기호 주변 공백 추가
-    text = text.replace('\\neq', ' \\neq ')     # 부등호 주변 공백 추가
+    text = text.replace('\\times', ' \\times ')
+    text = text.replace('\\pm', ' \\pm ')
+    text = text.replace('\\neq', ' \\neq ')
     
     # 단일 $ 처리
     text = re.sub(r'(?<![$])\$(?![$])(.*?)(?<![$])\$(?![$])', lambda m: f'${m.group(1).strip()}$', text)
     
     # 수식 내 여러 공백을 단일 공백으로 변경
     text = re.sub(r'\s+', ' ', text)
+    
+    # 줄바꿈 처리
+    # 1. ###로 구분된 부분을 줄바꿈으로 변경
+    text = text.replace('###', '\n\n')
+    
+    # 2. 문장 끝 부호(.!?) 다음에 오는 공백을 줄바꿈으로 변경
+    text = re.sub(r'([.!?])\s+', r'\1\n\n', text)
+    
+    # 3. 숫자로 시작하는 항목 앞에 줄바꿈 추가
+    text = re.sub(r'(?<=\S)\s+(?=\d+\.)', r'\n\n', text)
     
     return text
 
