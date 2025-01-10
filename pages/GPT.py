@@ -4,7 +4,7 @@ from openai import OpenAI
 # OpenAI API 키 설정
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
 
-st.title("임시용 챗봇 - 성호중 박범진")
+st.title("방학 수학 방과후 챗봇 - 성호중 박범진")
 
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-4o"
