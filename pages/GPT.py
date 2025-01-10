@@ -3,35 +3,50 @@ from openai import OpenAI
 import re
 
 # OpenAI 객체 생성
-client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
-def process_latex(text):
-    """모든 LaTeX 수식을 처리하고 줄바꿈을 보존하는 함수"""
+client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])def process_latex(text):
+    """LaTeX 수식과 줄바꿈을 처리하는 함수"""
     
-    # 멀티라인 수식 처리 ($$...$$)
+    # 1. LaTeX 수식 처리
+    # 멀티라인 수식 ($$...$$) 보존
     text = re.sub(r'\$\$(.*?)\$\$', lambda m: f'$${m.group(1).strip()}$$', text, flags=re.DOTALL)
     
-    # LaTeX 수식 문법 정규화
-    text = text.replace('\\times', ' \\times ')
-    text = text.replace('\\pm', ' \\pm ')
-    text = text.replace('\\neq', ' \\neq ')
+    # 인라인 수식 ($...$) 처리
+    def format_inline_math(match):
+        math = match.group(1).strip()
+        # 수식 내부 공백 정리
+        math = re.sub(r'\s+', ' ', math)
+        # times 연산자 정리
+        math = math.replace('times', '\\times')
+        return f'${math}$'
     
-    # 단일 $ 처리
-    text = re.sub(r'(?<![$])\$(?![$])(.*?)(?<![$])\$(?![$])', lambda m: f'${m.group(1).strip()}$', text)
+    text = re.sub(r'\$(.*?)\$', format_inline_math, text)
     
-    # 수식 내 여러 공백을 단일 공백으로 변경
-    text = re.sub(r'\s+', ' ', text)
+    # 2. 줄바꿈 처리
+    paragraphs = []
+    current_paragraph = []
     
-    # 줄바꿈 처리
-    # 1. ###로 구분된 부분을 줄바꿈으로 변경
-    text = text.replace('###', '\n\n')
+    for line in text.split('\n'):
+        line = line.strip()
+        if not line:  # 빈 줄을 만나면
+            if current_paragraph:  # 현재 단락이 있으면
+                paragraphs.append(' '.join(current_paragraph))
+                current_paragraph = []
+        else:
+            # 숫자로 시작하는 줄은 새로운 단락으로
+            if re.match(r'^\d+\.', line) or line.startswith('---'):
+                if current_paragraph:
+                    paragraphs.append(' '.join(current_paragraph))
+                    current_paragraph = []
+                paragraphs.append(line)
+            else:
+                current_paragraph.append(line)
     
-    # 2. 문장 끝 부호(.!?) 다음에 오는 공백을 줄바꿈으로 변경
-    text = re.sub(r'([.!?])\s+', r'\1\n\n', text)
+    # 마지막 단락 처리
+    if current_paragraph:
+        paragraphs.append(' '.join(current_paragraph))
     
-    # 3. 숫자로 시작하는 항목 앞에 줄바꿈 추가
-    text = re.sub(r'(?<=\S)\s+(?=\d+\.)', r'\n\n', text)
-    
-    return text
+    # 줄바꿈으로 단락 결합
+    return '\n\n'.join(paragraphs)
 
 st.title("중1 수학 선생님 챗봇-성호중 범진")
 
