@@ -4,23 +4,15 @@ import re
 
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
+
 def process_latex(text):
     """LaTeX 수식을 처리하는 함수"""
     
-    # 기본적인 LaTeX 수식 기호 치환
-    replacements = {
-        'times': '\\\\times',
-        '(-1)': '(-1)',
-        '-1^2': '(-1)^2',
-        '**': ''
-    }
-    
-    for old, new in replacements.items():
-        text = text.replace(old, new)
-    
-    # 일반 텍스트 내의 '2*2' 같은 경우 Markdown이 *를 해석해 줄바꿈 등을 유발하므로
-    # 숫자 사이에 오는 *는 \* 로 치환해서 Markdown 처리를 방지
-    text = re.sub(r'(\d)\*(\d)', r'\1\\*\2', text)
+    # 'times'를 유니코드 곱셈 기호 '×'로 치환
+    text = text.replace('times', '×')
+    text = text.replace('(-1)', '(-1)')
+    text = text.replace('-1^2', '(-1)^2')
+    text = text.replace('**', '')
 
     # 수식 블록 처리
     def preserve_formula(match):
@@ -50,7 +42,6 @@ def process_latex(text):
     text = re.sub(r'\n\s*\n', '\n\n', text)
     
     return text.strip()
-
 
 
 st.title("중1 수학 선생님 챗봇-성호중 범진")
