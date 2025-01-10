@@ -56,7 +56,7 @@ if prompt:
         partial_response = ""
 
         # OpenAI ChatCompletion 호출
-        completion_stream = client.chatcompletion.create(
+        completion_stream = client.chatcompletions.create(
             model=st.session_state["openai_model"],
             messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state["messages"]],
             stream=True,
