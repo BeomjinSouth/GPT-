@@ -4,12 +4,10 @@ import re
 
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
-
 def process_latex(text):
     """LaTeX 수식을 처리하는 함수"""
     
     # 기본적인 LaTeX 수식 기호 치환
-    # 여기서 'times' -> '\\\\times' (백슬래시 두 개)로 변경하여 실제 \times 로 보이게 처리
     replacements = {
         'times': '\\\\times',
         '(-1)': '(-1)',
@@ -20,6 +18,10 @@ def process_latex(text):
     for old, new in replacements.items():
         text = text.replace(old, new)
     
+    # 일반 텍스트 내의 '2*2' 같은 경우 Markdown이 *를 해석해 줄바꿈 등을 유발하므로
+    # 숫자 사이에 오는 *는 \* 로 치환해서 Markdown 처리를 방지
+    text = re.sub(r'(\d)\*(\d)', r'\1\\*\2', text)
+
     # 수식 블록 처리
     def preserve_formula(match):
         """수식 블록 내용을 보존하고 정리"""
