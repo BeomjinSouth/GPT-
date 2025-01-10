@@ -4,49 +4,64 @@ import re
 
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
-
 def process_latex(text):
-    """LaTeX 수식을 처리하는 함수"""
+    """LaTeX 수식과 텍스트 처리를 위한 함수"""
     
-    # 기본적인 LaTeX 수식 기호 치환
-    replacements = {
-        'times': '\\times',
-        '(-1)': '(-1)',  # 괄호 보존
-        '-1^2': '(-1)^2',  # 음수 제곱 시 괄호 처리
-        '**': ''  # 불필요한 강조 제거
-    }
+    # 1. times 표기를 먼저 처리
+    text = text.replace('times', '\\times')
     
-    for old, new in replacements.items():
-        text = text.replace(old, new)
-    
-    # 수식 블록 처리
+    # 2. 괄호 및 수식 보존
     def preserve_formula(match):
-        """수식 블록 내용을 보존하고 정리"""
-        formula = match.group(1)
-        # 수식 내부 공백 정리
-        formula = ' '.join(formula.split())
+        formula = match.group(1).strip()
+        # 수식 내부 정리 (불필요한 공백 제거 및 기호 정리)
+        formula = re.sub(r'\s+', ' ', formula)
         return f'${formula}$'
-    
-    # 수식 패턴 ($...$ 또는 $$...$$) 찾아서 처리
+
+    # 3. 수식 처리 ($$...$$와 $...$)
     text = re.sub(r'\$\$(.*?)\$\$', lambda m: f'$${m.group(1).strip()}$$', text, flags=re.DOTALL)
-    text = re.sub(r'\$(.*?)\$', preserve_formula, text)
+    text = re.sub(r'\$([^$]+)\$', preserve_formula, text)
     
-    # 줄바꿈 처리
-    lines = []
+    # 4. 텍스트 줄바꿈 처리
+    # 문장 단위로 분리하여 처리
+    sentences = []
     for line in text.split('\n'):
-        line = line.strip()
-        if line:
-            # 번호로 시작하는 줄은 앞뒤로 빈 줄 추가
-            if re.match(r'^\d+\.', line):
-                lines.extend(['', line, ''])
-            else:
-                lines.append(line)
+        if line.strip():
+            # 문장 끝 표시가 있는 경우 줄바꿈 추가
+            parts = re.split(r'([.!?][\s]*)', line)
+            for i in range(0, len(parts)-1, 2):
+                sentence = parts[i] + parts[i+1]
+                sentences.append(sentence.strip())
+            if len(parts) % 2 == 1 and parts[-1].strip():
+                sentences.append(parts[-1].strip())
     
-    # 연속된 빈 줄 제거
-    text = '\n'.join(lines)
-    text = re.sub(r'\n\s*\n', '\n\n', text)
+    # 5. 최종 텍스트 조합
+    result = '\n\n'.join(sentences)
     
-    return text.strip()
+    # 6. 연속된 공백 제거
+    result = re.sub(r'\n\s*\n', '\n\n', result)
+    
+    return result
+
+# 스타일 부분도 수정
+st.markdown("""
+    <style>
+        .katex { font-size: 1.1em; }
+        .katex-display { 
+            overflow: visible;
+            margin: 1em 0;
+        }
+        .element-container {
+            margin-bottom: 1em;
+        }
+        .markdown-text-container {
+            line-height: 1.8;
+        }
+        /* 줄바꿈 강제 방지 */
+        .katex-html {
+            white-space: nowrap !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
 st.title("중1 수학 선생님 챗봇-성호중 범진")
 
