@@ -1,0 +1,16 @@
+streamlit>=1.0
+openai>=0.10.0
+pdfplumber
+PyPDF2
+python-dotenv
+pydub
+numpy>=1.18.0
+sympy
+matplotlib>=3.2.0
+pdfplumber
+scipy
+scikit-learn
+pillow
+pandas
+openpyxl
+pandas>=1.4.0
