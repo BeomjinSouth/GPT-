@@ -4,64 +4,45 @@ import re
 
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
+
+
 def process_latex(text):
-    """LaTeX 수식과 텍스트 처리를 위한 함수"""
+    """LaTeX 수식을 처리하는 함수"""
     
-    # 1. times 표기를 먼저 처리
-    text = text.replace('times', '\\times')
+    # 불필요한 강조 제거 등 기본 치환
+    # (times 관련 부분은 re.sub로 변경)
+    text = re.sub(r'\btimes\b', r'\\times', text)
+    text = text.replace('(-1)', '(-1)')
+    text = text.replace('-1^2', '(-1)^2')
+    text = text.replace('**', '')
     
-    # 2. 괄호 및 수식 보존
+    # 수식 블록 처리
     def preserve_formula(match):
-        formula = match.group(1).strip()
-        # 수식 내부 정리 (불필요한 공백 제거 및 기호 정리)
-        formula = re.sub(r'\s+', ' ', formula)
+        """수식 블록 내용을 보존 (줄바꿈/공백 손실 방지)"""
+        formula = match.group(1)
         return f'${formula}$'
-
-    # 3. 수식 처리 ($$...$$와 $...$)
+    
+    # 수식 패턴 ($...$ 또는 $$...$$) 찾아서 처리
     text = re.sub(r'\$\$(.*?)\$\$', lambda m: f'$${m.group(1).strip()}$$', text, flags=re.DOTALL)
-    text = re.sub(r'\$([^$]+)\$', preserve_formula, text)
+    text = re.sub(r'\$(.*?)\$', preserve_formula, text)
     
-    # 4. 텍스트 줄바꿈 처리
-    # 문장 단위로 분리하여 처리
-    sentences = []
+    # 줄바꿈 처리
+    lines = []
     for line in text.split('\n'):
-        if line.strip():
-            # 문장 끝 표시가 있는 경우 줄바꿈 추가
-            parts = re.split(r'([.!?][\s]*)', line)
-            for i in range(0, len(parts)-1, 2):
-                sentence = parts[i] + parts[i+1]
-                sentences.append(sentence.strip())
-            if len(parts) % 2 == 1 and parts[-1].strip():
-                sentences.append(parts[-1].strip())
+        line = line.strip()
+        if line:
+            # 번호로 시작하는 줄은 앞뒤로 빈 줄 추가
+            if re.match(r'^\d+\.', line):
+                lines.extend(['', line, ''])
+            else:
+                lines.append(line)
     
-    # 5. 최종 텍스트 조합
-    result = '\n\n'.join(sentences)
+    # 연속된 빈 줄 제거
+    text = '\n'.join(lines)
+    text = re.sub(r'\n\s*\n', '\n\n', text)
     
-    # 6. 연속된 공백 제거
-    result = re.sub(r'\n\s*\n', '\n\n', result)
-    
-    return result
+    return text.strip()
 
-# 스타일 부분도 수정
-st.markdown("""
-    <style>
-        .katex { font-size: 1.1em; }
-        .katex-display { 
-            overflow: visible;
-            margin: 1em 0;
-        }
-        .element-container {
-            margin-bottom: 1em;
-        }
-        .markdown-text-container {
-            line-height: 1.8;
-        }
-        /* 줄바꿈 강제 방지 */
-        .katex-html {
-            white-space: nowrap !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
 
 st.title("중1 수학 선생님 챗봇-성호중 범진")
 
