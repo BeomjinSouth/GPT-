@@ -14,6 +14,7 @@ def process_latex(text):
         # 수식 내부의 공백 정리
         math_text = ' '.join(math_text.split())
         # times를 ×로 변환 (수식 내부에서만)
+        text = re.sub(r'\\times', '×', text)
         math_text = math_text.replace('times', '×')
         math_text = math_text.replace('\\times', '×')
         return math_text
