@@ -72,7 +72,7 @@ if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == 
         })
         
         stream = client.chat.completions.create(
-            model="gpt-4o",
+            model="o1-mini",
             messages=messages,
             stream=True
         )
