@@ -3,7 +3,8 @@ from openai import OpenAI
 import re
 
 # OpenAI 객체 생성
-client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])def process_latex(text):
+client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
+def process_latex(text):
     """LaTeX 수식과 줄바꿈을 처리하는 함수"""
     
     # 1. LaTeX 수식 처리
