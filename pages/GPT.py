@@ -4,50 +4,49 @@ import re
 
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
+
 def process_latex(text):
-    """LaTeX 수식과 줄바꿈을 처리하는 함수"""
+    """LaTeX 수식을 처리하는 함수"""
     
-    # 1. LaTeX 수식 처리
-    # 멀티라인 수식 ($$...$$) 보존
-    text = re.sub(r'\$\$(.*?)\$\$', lambda m: f'$${m.group(1).strip()}$$', text, flags=re.DOTALL)
+    # 기본적인 LaTeX 수식 기호 치환
+    replacements = {
+        'times': '\\times',
+        '(-1)': '(-1)',  # 괄호 보존
+        '-1^2': '(-1)^2',  # 음수 제곱 시 괄호 처리
+        '**': ''  # 불필요한 강조 제거
+    }
     
-    # 인라인 수식 ($...$) 처리
-    def format_inline_math(match):
-        math = match.group(1).strip()
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    
+    # 수식 블록 처리
+    def preserve_formula(match):
+        """수식 블록 내용을 보존하고 정리"""
+        formula = match.group(1)
         # 수식 내부 공백 정리
-        math = re.sub(r'\s+', ' ', math)
-        # times 연산자 정리
-        math = math.replace('times', '\\times')
-        return f'${math}$'
+        formula = ' '.join(formula.split())
+        return f'${formula}$'
     
-    text = re.sub(r'\$(.*?)\$', format_inline_math, text)
+    # 수식 패턴 ($...$ 또는 $$...$$) 찾아서 처리
+    text = re.sub(r'\$\$(.*?)\$\$', lambda m: f'$${m.group(1).strip()}$$', text, flags=re.DOTALL)
+    text = re.sub(r'\$(.*?)\$', preserve_formula, text)
     
-    # 2. 줄바꿈 처리
-    paragraphs = []
-    current_paragraph = []
-    
+    # 줄바꿈 처리
+    lines = []
     for line in text.split('\n'):
         line = line.strip()
-        if not line:  # 빈 줄을 만나면
-            if current_paragraph:  # 현재 단락이 있으면
-                paragraphs.append(' '.join(current_paragraph))
-                current_paragraph = []
-        else:
-            # 숫자로 시작하는 줄은 새로운 단락으로
-            if re.match(r'^\d+\.', line) or line.startswith('---'):
-                if current_paragraph:
-                    paragraphs.append(' '.join(current_paragraph))
-                    current_paragraph = []
-                paragraphs.append(line)
+        if line:
+            # 번호로 시작하는 줄은 앞뒤로 빈 줄 추가
+            if re.match(r'^\d+\.', line):
+                lines.extend(['', line, ''])
             else:
-                current_paragraph.append(line)
+                lines.append(line)
     
-    # 마지막 단락 처리
-    if current_paragraph:
-        paragraphs.append(' '.join(current_paragraph))
+    # 연속된 빈 줄 제거
+    text = '\n'.join(lines)
+    text = re.sub(r'\n\s*\n', '\n\n', text)
     
-    # 줄바꿈으로 단락 결합
-    return '\n\n'.join(paragraphs)
+    return text.strip()
 
 st.title("중1 수학 선생님 챗봇-성호중 범진")
 
@@ -59,7 +58,16 @@ if "messages" not in st.session_state:
 st.markdown("""
     <style>
         .katex { font-size: 1.1em; }
-        .katex-display { overflow: auto hidden; }
+        .katex-display { 
+            overflow: auto hidden;
+            white-space: nowrap;
+        }
+        .element-container {
+            overflow-x: auto;
+        }
+        .markdown-text-container {
+            line-height: 1.6;
+        }
     </style>
     """, unsafe_allow_html=True)
 
@@ -84,16 +92,19 @@ if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == 
             "content": """당신은 중학교 1학년에게 수학 문제의 해결 방법을 차근차근 안내하는 교사입니다. 
             문제에 대해 곧바로 답을 알려주지 마세요. 당신은 문제를 대신 풀어주는 로봇이 아닙니다. 
             당신은 반드시 학생들이 풀이과정 중 오류가 있거나 이해가 안되는 부분이 있을 때 해당하는 부분을 문답법을 통해 알려줘야합니다. 
-            챗봇을 활용하는 대상은 중학교 1학년 학생이기 때문에 한 번에 6문장을 넘게 전달하지 않고 차근차근 내용을 전달합니다. 중간중간 이해가 잘 되고 있는지 지속적으로 체크하세요.
+            챗봇을 활용하는 대상은 중학교 1학년 학생이기 때문에 한 번에 6문장을 넘게 전달하지 않고 차근차근 내용을 전달합니다. 
+            중간중간 이해가 잘 되고 있는지 지속적으로 체크하세요.
             
-            수식을 작성할 때는 반드시 LaTeX 문법을 사용하세요.
-            1. 인라인 수식은 $...$ 로 표시
-            2. 디스플레이 수식은 $$...$$ 로 표시
-            3. 연산자 앞뒤로 적절한 공백을 넣어 가독성을 높이세요"""
+            수식 작성 시 다음 규칙을 반드시 지켜주세요:
+            1. 음수의 제곱은 반드시 괄호로 감싸주세요. 예: $(-1)^2$
+            2. 곱셈은 반드시 \\times를 사용하세요
+            3. 인라인 수식은 $...$ 로 표시하세요
+            4. 디스플레이 수식은 $$...$$로 표시하세요
+            5. 수식 안에서 설명이나 강조를 위한 ** 사용을 피하세요"""
         })
         
         stream = client.chat.completions.create(
-            model="chatgpt-4o-latest",
+            model="chatgpt-4o-latest",  # 요청하신 모델로 변경
             messages=messages,
             stream=True
         )
