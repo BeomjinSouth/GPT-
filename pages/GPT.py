@@ -4,18 +4,23 @@ import re
 
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
-
 def process_latex(text):
     """모든 수식을 LaTeX 형식으로 변환"""
-    # 대괄호로 둘러싸인 수식을 $$...$$로 변환
-    text = re.sub(r'\[(.*?)\]', r'$$\1$$', text, flags=re.DOTALL)
+    # 중복된 $ 기호 처리
+    text = text.replace('$$$$', '$$')
     
-    # 괄호로 둘러싸인 수식 표현을 $...$로 변환
-    text = re.sub(r'\((.*?)\)', lambda m: '$' + m.group(1) + '$' if any(c in m.group(1) for c in ['^', '\\', '+', '=', '-', '±', '≠']) else '(' + m.group(1) + ')', text)
+    # ×× 를 × 로 변환
+    text = text.replace('××', '\\times')
     
     # LaTeX 특수 문자 처리
     text = text.replace('\\neq', '\\neq ')
     text = text.replace('^2', '^{2}')
+    
+    # 대괄호로 둘러싸인 수식을 $$...$$로 변환 (이미 $$ 가 있는 경우 제외)
+    text = re.sub(r'\[([^$].*?)\]', r'$$\1$$', text, flags=re.DOTALL)
+    
+    # 괄호로 둘러싸인 수식 표현을 $...$로 변환 (이미 $ 가 있는 경우 제외)
+    text = re.sub(r'\(([^$].*?)\)', lambda m: '$' + m.group(1) + '$' if any(c in m.group(1) for c in ['^', '\\', '+', '=', '-', '±', '≠', '×']) else '(' + m.group(1) + ')', text)
     
     # 불릿 포인트 및 줄바꿈 보존
     lines = []
