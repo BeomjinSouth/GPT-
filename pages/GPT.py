@@ -5,21 +5,27 @@ import re
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
 
-
 def process_latex(text):
     """LaTeX 수식을 처리하는 함수"""
     
-    # 불필요한 강조 제거 등 기본 치환
-    # (times 관련 부분은 re.sub로 변경)
-    text = re.sub(r'\btimes\b', r'\\times', text)
-    text = text.replace('(-1)', '(-1)')
-    text = text.replace('-1^2', '(-1)^2')
-    text = text.replace('**', '')
+    # 기본적인 LaTeX 수식 기호 치환
+    # 여기서 'times' -> '\\\\times' (백슬래시 두 개)로 변경하여 실제 \times 로 보이게 처리
+    replacements = {
+        'times': '\\\\times',
+        '(-1)': '(-1)',
+        '-1^2': '(-1)^2',
+        '**': ''
+    }
+    
+    for old, new in replacements.items():
+        text = text.replace(old, new)
     
     # 수식 블록 처리
     def preserve_formula(match):
-        """수식 블록 내용을 보존 (줄바꿈/공백 손실 방지)"""
+        """수식 블록 내용을 보존하고 정리"""
         formula = match.group(1)
+        # 수식 내부 공백 정리
+        formula = ' '.join(formula.split())
         return f'${formula}$'
     
     # 수식 패턴 ($...$ 또는 $$...$$) 찾아서 처리
@@ -42,6 +48,7 @@ def process_latex(text):
     text = re.sub(r'\n\s*\n', '\n\n', text)
     
     return text.strip()
+
 
 
 st.title("중1 수학 선생님 챗봇-성호중 범진")
