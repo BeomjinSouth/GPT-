@@ -4,11 +4,11 @@ import re
 
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
-
 def process_latex(text):
     """LaTeX 수식을 처리하는 함수"""
     
-    # 'times'를 유니코드 곱셈 기호 '×'로 치환
+    # '\\times'나 'times' 모두 유니코드 곱셈 기호 '×'로 치환
+    text = re.sub(r'\\times', '×', text)
     text = text.replace('times', '×')
     text = text.replace('(-1)', '(-1)')
     text = text.replace('-1^2', '(-1)^2')
@@ -42,7 +42,6 @@ def process_latex(text):
     text = re.sub(r'\n\s*\n', '\n\n', text)
     
     return text.strip()
-
 
 st.title("중1 수학 선생님 챗봇-성호중 범진")
 
