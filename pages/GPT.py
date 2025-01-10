@@ -4,26 +4,25 @@ import re
 
 # OpenAI 객체 생성
 client = OpenAI(api_key=st.secrets["OPENAI"]["OPENAI_API_KEY"])
-
 def process_latex(text):
     """LaTeX 수식을 처리하는 함수"""
     
-    # 수식 블록 안에 있는 내용만 처리하기
-    def process_math(math_text):
-        """수식 내부 내용만 처리하는 함수"""
-        # 수식 내부의 공백 정리
-        math_text = ' '.join(math_text.split())
-        # times를 ×로 변환 (수식 내부에서만)
-        text = re.sub(r'\\times', '×', text)
-        math_text = math_text.replace('times', '×')
-        math_text = math_text.replace('\\times', '×')
-        return math_text
+    # '\\times'나 'times' 모두 유니코드 곱셈 기호 '×'로 치환
+    text = re.sub(r'\\times', '×', text)
+    text = text.replace('times', '×')
+    text = text.replace('**', '')
+
+    # 수식 블록 처리
+    def preserve_formula(match):
+        """수식 블록 내용을 보존하고 정리"""
+        formula = match.group(1)
+        # 수식 내부 공백 정리
+        formula = ' '.join(formula.split())
+        return f'${formula}$'
     
-    # 디스플레이 수식 ($$...$$) 처리
-    text = re.sub(r'\$\$(.*?)\$\$', lambda m: f'$${process_math(m.group(1))}$$', text, flags=re.DOTALL)
-    
-    # 인라인 수식 ($...$) 처리
-    text = re.sub(r'\$(.*?)\$', lambda m: f'${process_math(m.group(1))}$', text)
+    # 수식 패턴 ($...$ 또는 $$...$$) 찾아서 처리
+    text = re.sub(r'\$\$(.*?)\$\$', lambda m: f'$${m.group(1).strip()}$$', text, flags=re.DOTALL)
+    text = re.sub(r'\$(.*?)\$', preserve_formula, text)
     
     # 줄바꿈 처리
     lines = []
@@ -41,6 +40,8 @@ def process_latex(text):
     text = re.sub(r'\n\s*\n', '\n\n', text)
     
     return text.strip()
+
+
 
 st.title("중1 수학 선생님 챗봇-성호중 범진")
 
