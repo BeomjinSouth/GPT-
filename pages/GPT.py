@@ -31,8 +31,6 @@ def process_latex(text):
     # 연속된 빈 줄 제거
     processed_text = re.sub(r'\n\s*\n', '\n\n', processed_text)
 
-    # process_latex 함수 결과 로깅
-    print(f"Processed Text: {processed_text}")
     return processed_text.strip()
 
 
@@ -43,24 +41,6 @@ st.title("루브릭 챗봇-성호중 범진")
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
-# KaTeX 스타일 추가
-st.markdown("""
-    <style>
-        .katex { font-size: 1.1em; }
-        .katex-display {
-            overflow: auto hidden;
-            white-space: nowrap;
-        }
-        .element-container {
-            overflow-x: auto;
-        }
-        .markdown-text-container {
-            line-height: 1.6;
-            white-space: pre-wrap; /* 줄바꿈 유지를 위한 속성 추가 */
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
 # 메시지 컨테이너 생성
 message_container = st.container()
 
@@ -68,7 +48,7 @@ message_container = st.container()
 with message_container:
     for msg in st.session_state["messages"]:
         with st.chat_message(msg["role"]):
-            st.markdown(process_latex(msg["content"]))
+            st.text_area(process_latex(msg["content"]), disabled=True, height=200) # height 조절 가능
 
 # 새로운 메시지가 있을 때 응답 생성
 if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == "user":
@@ -106,9 +86,6 @@ if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == 
 
             ## 기타 루브릭에 대한 안내
             효과적인 루브릭 작성은 '학습 결과'에 초점을 맞추어 평가 기준을 명확하고 관찰 가능하게 정의하고, 각 기준에 대해 구체적이며 구분이 명확한 서술적 성과 수준을 제시하는 것에 있습니다. 이를 통해 루브릭은 단순한 점수 매기기를 넘어서, 학생들의 학습 진행 상황을 진단하고 피드백하는 강력한 학습 도구로 활용될 수 있습니다
-            
-            # 그 외 규칙
-            반드시 줄 구분하여 작성합니다. 가독성을 높여야합니다.
             """
         })
 
@@ -122,12 +99,8 @@ if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == 
             if response.choices[0].delta.content is not None:
                 content = response.choices[0].delta.content
                 full_response += content
-                # OpenAI API 응답 중간 결과 로깅
-                print(f"Stream Content: {content}")
-                response_container.markdown(process_latex(full_response))
+                response_container.text_area(process_latex(full_response), disabled=True, height=200)
 
-        # OpenAI API 최종 응답 로깅
-        print(f"Full Response: {full_response}")
         st.session_state["messages"].append({"role": "assistant", "content": full_response})
 
 # 채팅 입력
