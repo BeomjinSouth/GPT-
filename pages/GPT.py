@@ -26,12 +26,14 @@ def process_latex(text):
 
     # 줄바꿈 처리
     lines = [line.strip() for line in text.split('\n') if line.strip()]
-    text = '\n'.join(lines)
+    processed_text = '\n'.join(lines)
 
     # 연속된 빈 줄 제거
-    text = re.sub(r'\n\s*\n', '\n\n', text)
+    processed_text = re.sub(r'\n\s*\n', '\n\n', processed_text)
 
-    return text.strip()
+    # process_latex 함수 결과 로깅
+    print(f"Processed Text: {processed_text}")
+    return processed_text.strip()
 
 
 
@@ -117,8 +119,12 @@ if st.session_state["messages"] and st.session_state["messages"][-1]["role"] == 
             if response.choices[0].delta.content is not None:
                 content = response.choices[0].delta.content
                 full_response += content
+                # OpenAI API 응답 중간 결과 로깅
+                print(f"Stream Content: {content}")
                 response_container.markdown(process_latex(full_response))
 
+        # OpenAI API 최종 응답 로깅
+        print(f"Full Response: {full_response}")
         st.session_state["messages"].append({"role": "assistant", "content": full_response})
 
 # 채팅 입력
