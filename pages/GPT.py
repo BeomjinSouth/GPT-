@@ -94,7 +94,6 @@ if uploaded_file is not None:
     messages_for_api = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages[:-1]] # 방금 추가한 표시용 메시지는 제외
     messages_for_api.append({"role": "user", "content": user_message_content}) # 실제 이미지 포함 메시지 추가
 
-
     # 5. OpenAI API 호출 (Vision 모델 사용)
     try:
         with st.chat_message("assistant"):
@@ -102,10 +101,12 @@ if uploaded_file is not None:
                 response = client.chat.completions.create(
                     model=st.session_state["openai_model"], # Vision 가능 모델 사용
                     messages=messages_for_api,
-                    max_tokens=1024 # 응답 길이를 적절히 조절
+                    # max_tokens=1024 # 이 부분을 수정
+                    max_completion_tokens=1024 # 이렇게 수정
                 )
                 full_response = response.choices[0].message.content
                 st.markdown(full_response)
+
 
         # 6. 세션 상태에 어시스턴트 응답 추가
         st.session_state.messages.append({"role": "assistant", "content": full_response})
@@ -136,7 +137,8 @@ if prompt := st.chat_input("질문이 있나요? (텍스트로 질문)"):
                 response = client.chat.completions.create(
                     model=st.session_state["openai_model"], # 동일 모델 사용 (Vision 모델도 텍스트 처리 가능)
                     messages=messages_for_api,
-                    max_tokens=500
+                    # max_tokens=500 # 이 부분을 수정
+                    max_completion_tokens=500 # 이렇게 수정
                 )
                 full_response = response.choices[0].message.content
                 st.markdown(full_response)
