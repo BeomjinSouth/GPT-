@@ -20,7 +20,7 @@ st.warning("⚠️ AI의 피드백은 참고만 하세요. 틀린 부분도 있�
 
 # --- 모델 선택 ---
 if "openai_model" not in st.session_state:
-    st.session_state["openai_model"] = "gpt-4o" # Vision 가능 모델
+    st.session_state["openai_model"] = "gpt-4.1" # Vision 가능 모델
     st.info(f"이미지 처리를 위해 '{st.session_state['openai_model']}' 모델을 사용합니다.")
 
 # --- 시스템 메시지 정의 ---
@@ -31,6 +31,7 @@ system_message = '''당신은 친절하고 이해하기 쉽게 설명하는 중�
 # 풀이과정 검토
 - 단순히 풀이 과정에 계산의 오류나 논리의 오류가 있는지만 체크하지 않음
 - 논술형으로 풀이 과정을 서술 할 때 양식의 오류, 형식의 문제 체크할 것
+- **식만 있어도 논리적 전개가 드러나는 경우 상세하게 한글로 설명을 작성할 필요 없음**
 
 ## 풀이과정의 형식 - 체크리스트
 - 등호를 옳게 작성하였는지
